@@ -75,7 +75,7 @@ export const SudokuProvider = ({ children }) => {
   const loadDailySudoku = async () => {
     try {
       setLoading(true)
-      const data = await sudokuAPI.getDailySudoku(deviceId, 'hard')
+      const data = await sudokuAPI.getDailySudoku(deviceId, 'medium')
     
       setSudoku(data)
       
