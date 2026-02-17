@@ -35,6 +35,162 @@ git push origin main
 
 ### 2. Sur Render.com
 
+#### Option A : Déploiement automatique avec render.yaml
+1. Connectez votre repository GitHub/GitLab
+2. Render détectera automatiquement `render.yaml`
+3. Créera automatiquement :
+   - Base de données PostgreSQL
+   - Service Web avec Docker
+
+#### Option B : Déploiement manuel
+
+**Créer la base de données :**
+1. Dashboard Render → New → PostgreSQL
+2. Name: `sudoku-db`
+3. Plan: Free
+4. Créer et copier l'URL de connexion
+
+**Créer le service web :**
+1. Dashboard Render → New → Web Service
+2. Connecter votre repository
+3. Configuration :
+   - **Name** : `sudoku-app`
+   - **Environment** : Docker
+   - **Dockerfile Path** : `./Dockerfile`
+   - **Plan** : Free
+4. Variables d'environnement :
+   - `DATABASE_URL` : Coller l'URL PostgreSQL
+   - `PORT` : `8000`
+5. Health Check Path : `/health`
+6. Deploy
+
+### 3. Vérification
+
+Une fois déployé, votre app sera accessible sur :
+```
+https://sudoku-app.onrender.com
+```
+
+L'API sera sur le même domaine :
+```
+https://sudoku-app.onrender.com/api/sudoku/...
+```
+
+## Variables d'environnement
+
+### Backend (automatiques via Render)
+- `DATABASE_URL` : URL PostgreSQL (fournie par Render)
+- `PORT` : 8000
+
+### Frontend (build time)
+- `VITE_API_URL` : Vide en production (même domaine)
+
+## Structure de déploiement
+
+```
+Render Web Service (Docker)
+├── Frontend (React/Vite) → /static/
+│   └── Servi par FastAPI
+└── Backend (FastAPI) → Port 8000
+    ├── API Routes → /api/*
+    ├── Health Check → /health
+    └── Static Files → /*
+
+Render PostgreSQL
+└── Base de données Sudoku
+```
+
+## Commandes utiles
+
+### Build local avec Docker
+```bash
+# Build l'image
+docker build -t sudoku-app .
+
+# Run localement
+docker run -p 8000:8000 \
+  -e DATABASE_URL="sqlite:///./sudoku.db" \
+  sudoku-app
+```
+
+### Test local
+```bash
+# Backend
+cd backend
+uvicorn app.main:app --reload --port 8000
+
+# Frontend (dans un autre terminal)
+cd frontend
+npm run dev
+```
+
+## Notes importantes
+
+1. **PostgreSQL vs SQLite** : Le code s'adapte automatiquement
+   - Local : SQLite (`sqlite:///./sudoku.db`)
+   - Production : PostgreSQL (via `DATABASE_URL`)
+
+2. **CORS** : Configuré pour accepter toutes les origines (`allow_origins=["*"]`)
+
+3. **Fichiers statiques** : Le backend sert automatiquement le frontend si le dossier `static/` existe
+
+4. **Health check** : Endpoint `/health` pour que Render vérifie que l'app fonctionne
+
+5. **Migrations** : Les tables sont créées automatiquement au démarrage (`Base.metadata.create_all()`)
+
+## Troubleshooting
+
+### L'app ne démarre pas
+- Vérifier les logs Render
+- Vérifier que `DATABASE_URL` est bien configuré
+- Vérifier le health check : `https://your-app.onrender.com/health`
+
+### Erreur de connexion DB
+- Vérifier que `psycopg2-binary` est dans `requirements.txt`
+- Vérifier le format de `DATABASE_URL` (doit commencer par `postgresql://`)
+
+### Frontend ne charge pas
+- Vérifier que le build Vite s'est bien passé (logs Docker)
+- Vérifier que le dossier `static/` existe dans le conteneur
+- Tester l'API directement : `https://your-app.onrender.com/api/sudoku/...`
+
+# Déploiement Sudoku sur Render
+
+## Architecture
+- **Frontend + Backend** : Conteneur Docker unique
+- **Base de données** : PostgreSQL externe sur Render
+
+## Fichiers de configuration créés
+
+### 1. `Dockerfile`
+Build multi-stage :
+- Stage 1 : Build du frontend React (Vite)
+- Stage 2 : Backend FastAPI + fichiers statiques frontend
+
+### 2. `render.yaml`
+Configuration Render avec :
+- Service PostgreSQL (gratuit)
+- Service Web Docker (gratuit)
+- Variables d'environnement automatiques
+
+### 3. `.dockerignore`
+Exclusion des fichiers inutiles du build Docker
+
+### 4. `.env.example`
+Template des variables d'environnement
+
+## Étapes de déploiement
+
+### 1. Préparer le repository Git
+```bash
+cd /Users/admin/venv/sudokus
+git add .
+git commit -m "Add Docker and Render deployment config"
+git push origin main
+```
+
+### 2. Sur Render.com
+
 **Étape 1 : Créer la base de données PostgreSQL**
 1. Dashboard Render → **New** → **PostgreSQL**
 2. Configuration :

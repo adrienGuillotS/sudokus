@@ -131,14 +131,49 @@ export const SudokuProvider = ({ children }) => {
       if (value > 0) {
         const newNotes = notes.map(r => r.map(c => [...c]))
         newNotes[row][col] = []
+        
+        // Clear the placed number from notes in same row, column, and box
+        const boxStartRow = Math.floor(row / 3) * 3
+        const boxStartCol = Math.floor(col / 3) * 3
+        
+        for (let i = 0; i < 9; i++) {
+          // Clear from same row
+          const rowNoteIndex = newNotes[row][i].indexOf(value)
+          if (rowNoteIndex > -1) {
+            newNotes[row][i].splice(rowNoteIndex, 1)
+          }
+          
+          // Clear from same column
+          const colNoteIndex = newNotes[i][col].indexOf(value)
+          if (colNoteIndex > -1) {
+            newNotes[i][col].splice(colNoteIndex, 1)
+          }
+        }
+        
+        // Clear from same 3x3 box
+        for (let i = 0; i < 3; i++) {
+          for (let j = 0; j < 3; j++) {
+            const boxRow = boxStartRow + i
+            const boxCol = boxStartCol + j
+            const boxNoteIndex = newNotes[boxRow][boxCol].indexOf(value)
+            if (boxNoteIndex > -1) {
+              newNotes[boxRow][boxCol].splice(boxNoteIndex, 1)
+            }
+          }
+        }
+        
         setNotes(newNotes)
+        
+        sudokuAPI.updateUserGrid(deviceId, currentDate, newGrid, elapsedTime, newNotes).catch(error => {
+          console.error('Error saving user grid:', error)
+        })
+      } else {
+        sudokuAPI.updateUserGrid(deviceId, currentDate, newGrid, elapsedTime, notes).catch(error => {
+          console.error('Error saving user grid:', error)
+        })
       }
       
       setUserGrid(newGrid)
-      
-      sudokuAPI.updateUserGrid(deviceId, currentDate, newGrid, elapsedTime, notes).catch(error => {
-        console.error('Error saving user grid:', error)
-      })
     }
   }
 

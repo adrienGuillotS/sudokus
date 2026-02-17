@@ -7,8 +7,8 @@ class SudokuGenerator:
     
     @staticmethod
     def generate_seed(device_id: str, date: str) -> int:
-        combined = f"{device_id}_{date}"
-        hash_object = hashlib.sha256(combined.encode())
+        # Use only date so all users get the same daily grid
+        hash_object = hashlib.sha256(date.encode())
         return int(hash_object.hexdigest(), 16) % (10 ** 8)
     
     @staticmethod
