@@ -52,9 +52,9 @@ class SudokuGenerator:
         return grid
     
     @staticmethod
-    def remove_numbers(grid: List[List[int]], difficulty: str = "medium") -> List[List[int]]:
+    def remove_numbers(grid: List[List[int]], difficulty: str = "easy") -> List[List[int]]:
         difficulty_map = {
-            "easy": 35,
+            "easy": 15,
             "medium": 45,
             "hard": 55
         }
@@ -75,7 +75,7 @@ class SudokuGenerator:
         return puzzle
     
     @staticmethod
-    def generate(device_id: str, date: str, difficulty: str = "medium") -> Tuple[List[List[int]], List[List[int]]]:
+    def generate(device_id: str, date: str, difficulty: str = "easy") -> Tuple[List[List[int]], List[List[int]]]:
         seed = SudokuGenerator.generate_seed(device_id, date)
         solution = SudokuGenerator.generate_complete_grid(seed)
         puzzle = SudokuGenerator.remove_numbers(solution, difficulty)

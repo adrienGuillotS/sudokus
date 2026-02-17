@@ -1,0 +1,21 @@
+services:
+  # PostgreSQL Database
+  - type: pserv
+    name: sudoku-db
+    env: docker
+    plan: free
+    
+  # Web service (Frontend + Backend)
+  - type: web
+    name: sudoku-app
+    env: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: sudoku-db
+          property: connectionString
+      - key: PORT
+        value: 8000
+    healthCheckPath: /health

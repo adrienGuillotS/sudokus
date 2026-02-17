@@ -1,9 +1,12 @@
 .sudoku-grid {
-  display: inline-block;
-  background: #344861;
-  padding: 10px;
-  border-radius: 8px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: #1e40af;
+  border: 3px solid #1e40af;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(30, 64, 175, 0.15);
 }
 
 .sudoku-row {
@@ -11,29 +14,58 @@
 }
 
 .sudoku-cell {
-  width: 50px;
-  height: 50px;
+  width: 60px;
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  font-size: 28px;
   font-weight: 600;
-  border: 1px solid #4a5f7f;
-  background: #fff;
   cursor: pointer;
-  transition: all 0.2s ease;
-  user-select: none;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+@media (max-width: 900px) {
+  .sudoku-grid {
+    max-width: 100%;
+  }
+  
+  .sudoku-cell {
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 600px) {
+  .sudoku-cell {
+    width: 38px;
+    height: 38px;
+    font-size: 20px;
+  }
+  
+  .cell-notes {
+    bottom: 2px;
+    right: 2px;
+  }
+  
+  .cell-note {
+    font-size: 7px;
+  }
 }
 
 .sudoku-cell.fixed {
-  background: #e8eaf6;
-  color: #1a237e;
-  font-weight: 700;
+  background: #fff;
+  color: #1e293b;
   cursor: default;
+  font-weight: 700;
 }
 
 .sudoku-cell.editable {
-  color: #2196f3;
+  color: #3b82f6;
 }
 
 .sudoku-cell.editable:hover {
@@ -41,29 +73,55 @@
 }
 
 .sudoku-cell.selected {
-  background: #bbdefb !important;
-  border: 2px solid #2196f3;
+  background: #dbeafe;
+  border: 2px solid #3b82f6;
+  box-shadow: inset 0 0 0 1px #3b82f6;
 }
 
 .sudoku-cell.highlighted {
-  background: #bbdefb;
+  background: #f1f5f9;
 }
 
 .sudoku-cell.same-number {
-  font-weight: 900;
+  background: #bfdbfe;
+  font-weight: 700;
 }
 
 .sudoku-cell.border-bottom {
-  border-bottom: 3px solid #344861;
+  border-bottom: 3px solid #1e40af;
 }
 
 .sudoku-cell.border-right {
-  border-right: 3px solid #344861;
+  border-right: 3px solid #1e40af;
 }
 
 .sudoku-cell.completed {
-  background: #c8e6c9 !important;
+  background: #d1fae5;
   color: #2e7d32;
+}
+
+.cell-value {
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.cell-notes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  width: 100%;
+  height: 100%;
+  padding: 2px;
+  font-size: 10px;
+  color: #666;
+  align-content: start;
+}
+
+.note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
 }
 
 @media (max-width: 600px) {
@@ -71,5 +129,13 @@
     width: 35px;
     height: 35px;
     font-size: 18px;
+  }
+  
+  .cell-value {
+    font-size: 18px;
+  }
+  
+  .cell-notes {
+    font-size: 8px;
   }
 }

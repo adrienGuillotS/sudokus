@@ -16,9 +16,9 @@ class SudokuResponse(SudokuBase):
     solution: List[List[int]]
     completed: int
     created_at: datetime
-    session_started: Optional[datetime] = None
-    session_active: bool = True
-    completion_time: Optional[int] = None
+    elapsed_time: int = 0
+    user_grid: Optional[List[List[int]]] = None
+    notes: Optional[List[List[List[int]]]] = None
     
     class Config:
         from_attributes = True

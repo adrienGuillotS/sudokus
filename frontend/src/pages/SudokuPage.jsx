@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSudoku } from '../context/SudokuContext'
 import { useKeyboard } from '../hooks/useKeyboard'
 import SudokuGrid from '../components/SudokuGrid'
 import NumberPad from '../components/NumberPad'
 import Controls from '../components/Controls'
+import ResultModal from '../components/ResultModal'
 import './SudokuPage.css'
 
 const SudokuPage = () => {
@@ -12,15 +13,32 @@ const SudokuPage = () => {
     selectedCell,
     setSelectedCell,
     updateCell,
+    deleteCell,
     checkSolution,
     isCompleted,
     elapsedTime,
-    completionTime,
-    sessionExpired,
-    error
+    completionTime
   } = useSudoku()
 
   const [message, setMessage] = useState('')
+  const [showModal, setShowModal] = useState(false)
+  const [modalData, setModalData] = useState({ isSuccess: false, elapsedTime: 0, ranking: null })
+  const [challengeData, setChallengeData] = useState(null)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const challengeTime = params.get('challenge')
+    const timeStr = params.get('time')
+    const rank = params.get('rank')
+    
+    if (challengeTime && timeStr) {
+      setChallengeData({
+        time: parseInt(challengeTime),
+        timeStr: timeStr,
+        rank: rank ? parseFloat(rank) : null
+      })
+    }
+  }, [])
 
   const handleNumberInput = (num) => {
     if (selectedCell) {
@@ -30,7 +48,7 @@ const SudokuPage = () => {
 
   const handleDelete = () => {
     if (selectedCell) {
-      updateCell(selectedCell.row, selectedCell.col, 0)
+      deleteCell(selectedCell.row, selectedCell.col)
     }
   }
 
@@ -65,8 +83,54 @@ const SudokuPage = () => {
 
   const handleVerify = async () => {
     const result = await checkSolution()
-    setMessage(result.message)
-    setTimeout(() => setMessage(''), 4000)
+    
+    if (result.incomplete) {
+      setModalData({ isSuccess: false, isIncomplete: true })
+      setShowModal(true)
+    } else if (result.correct) {
+      setModalData({
+        isSuccess: true,
+        elapsedTime: result.elapsed_time,
+        ranking: result.ranking
+      })
+      setShowModal(true)
+    } else {
+      setModalData({ isSuccess: false, isIncomplete: false })
+      setShowModal(true)
+    }
+  }
+
+  const handleShare = () => {
+    const { elapsedTime, ranking } = modalData
+    const mins = Math.floor(elapsedTime / 60)
+    const secs = elapsedTime % 60
+    const timeStr = `${mins}:${secs.toString().padStart(2, '0')}`
+    
+    const shareUrl = `${window.location.origin}?challenge=${elapsedTime}&time=${timeStr}${
+      ranking ? `&rank=${ranking.percentile}` : ''
+    }`
+    
+    navigator.clipboard.writeText(shareUrl)
+    const rankMsg = ranking ? `Rank #${ranking.rank} (Top ${(100 - ranking.percentile).toFixed(0)}%)` : ''
+    const shareText = `I completed today's Sudoku in ${timeStr}! ${rankMsg}\n\nCan you beat my time? ${shareUrl}`
+    
+    if (navigator.share) {
+      navigator.share({
+        title: 'My Sudoku Time',
+        text: shareText
+      }).catch(() => {})
+    } else {
+      navigator.clipboard.writeText(shareText)
+      alert('Link copied to clipboard!')
+    }
+  }
+
+  const handleTryAgain = () => {
+    setShowModal(false)
+  }
+
+  const handleCloseModal = () => {
+    setShowModal(false)
   }
 
   if (loading) {
@@ -77,53 +141,78 @@ const SudokuPage = () => {
     )
   }
 
-  if (sessionExpired) {
-    return (
-      <div className="sudoku-page">
-        <div className="sudoku-container">
-          <h1 className="title">Daily Sudoku</h1>
-          <div className="session-expired">
-            <h2>⏰ Session Expired</h2>
-            <p>{error || "Your session has expired. You can only attempt each puzzle once."}</p>
-            <p>Come back tomorrow for a new puzzle!</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="sudoku-page">
       <div className="sudoku-container">
-        <h1 className="title">Daily Sudoku</h1>
-        
-        {message && !isCompleted && (
-          <div className="message error">
-            {message}
+        {challengeData && (
+          <div className="challenge-banner">
+            <div className="challenge-icon">🎯</div>
+            <div className="challenge-text">
+              <h3>Challenge from a Friend!</h3>
+              <p>They completed it in <strong>{challengeData.timeStr}</strong></p>
+              {challengeData.rank && (
+                <p className="challenge-rank">Top {(100 - challengeData.rank).toFixed(0)}% of players</p>
+              )}
+            </div>
+            <div className="challenge-cta">
+              <strong>Can you do better?</strong>
+            </div>
           </div>
         )}
-
-        <SudokuGrid />
         
-        <NumberPad
-          onNumberClick={handleNumberInput}
-          onDelete={handleDelete}
-          disabled={!selectedCell || isCompleted}
-        />
-
-        <Controls
-          onVerify={handleVerify}
-          disabled={loading}
-          isCompleted={isCompleted}
-          elapsedTime={elapsedTime}
-          completionTime={completionTime}
-        />
-
-        <div className="instructions">
-          <p>Click a cell and use the number pad or keyboard (1-9) to fill it.</p>
-          <p>Use arrow keys to navigate between cells.</p>
+        <div className="game-area">
+          <div className="grid-section">
+            <div className="header">
+              <h1 className="title">Daily Sudoku</h1>
+              <p className="subtitle">Challenge your friends. A new sudoku every day.</p>
+            </div>
+            <SudokuGrid />
+            <div className="desktop-controls">
+              <Controls
+                onVerify={handleVerify}
+                disabled={loading}
+                isCompleted={isCompleted}
+                elapsedTime={elapsedTime}
+                completionTime={completionTime}
+              />
+            </div>
+          </div>
+          
+          <div className="controls-section">
+            <NumberPad
+              onNumberClick={handleNumberInput}
+              onDelete={handleDelete}
+              disabled={!selectedCell || isCompleted}
+            />
+            <div className="mobile-controls">
+              <Controls
+                onVerify={handleVerify}
+                disabled={loading}
+                isCompleted={isCompleted}
+                elapsedTime={elapsedTime}
+                completionTime={completionTime}
+                buttonOnly={true}
+              />
+              <Controls
+                elapsedTime={elapsedTime}
+                completionTime={completionTime}
+                timerOnly={true}
+              />
+            </div>
+          </div>
         </div>
       </div>
+
+      <ResultModal
+        isOpen={showModal}
+        isSuccess={modalData.isSuccess}
+        isIncomplete={modalData.isIncomplete}
+        elapsedTime={modalData.elapsedTime}
+        ranking={modalData.ranking}
+        onClose={handleCloseModal}
+        onShare={handleShare}
+        onTryAgain={handleTryAgain}
+      />
     </div>
   )
 }

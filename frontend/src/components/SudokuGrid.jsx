@@ -2,7 +2,7 @@ import { useSudoku } from '../context/SudokuContext'
 import './SudokuGrid.css'
 
 const SudokuGrid = () => {
-  const { sudoku, userGrid, selectedCell, setSelectedCell, isCompleted } = useSudoku()
+  const { sudoku, userGrid, notes, selectedCell, setSelectedCell, isCompleted } = useSudoku()
 
   if (!sudoku || !userGrid) return null
 
@@ -48,7 +48,17 @@ const SudokuGrid = () => {
               `}
               onClick={() => handleCellClick(rowIndex, colIndex)}
             >
-              {cell !== 0 ? cell : ''}
+              {cell !== 0 ? (
+                <span className="cell-value">{cell}</span>
+              ) : (
+                notes && notes[rowIndex][colIndex] && notes[rowIndex][colIndex].length > 0 && (
+                  <div className="cell-notes">
+                    {notes[rowIndex][colIndex].map(note => (
+                      <span key={note} className="note">{note}</span>
+                    ))}
+                  </div>
+                )
+              )}
             </div>
           ))}
         </div>

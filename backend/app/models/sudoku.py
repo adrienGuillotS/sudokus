@@ -15,3 +15,6 @@ class Sudoku(Base):
     difficulty = Column(String, default="medium")
     created_at = Column(DateTime, default=datetime.utcnow)
     completed = Column(Integer, default=0)
+    elapsed_time = Column(Integer, default=0)
+    user_grid = Column(JSON, nullable=True)
+    notes = Column(JSON, nullable=True)
